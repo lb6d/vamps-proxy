@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Proxy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #content {
+            min-height: 200px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GitHub Proxy</h1>
+        <form id="proxyForm">
+            <label for="githubUrl">Enter GitHub Repository URL:</label>
+            <input type="text" id="githubUrl" name="githubUrl" required>
+            <button type="submit">Proxy</button>
+        </form>
+        <div id="content"></div>
+    </div>
+    <script>
+        document.getElementById('proxyForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const githubUrl = document.getElementById('githubUrl').value;
+            const contentDiv = document.getElementById('content');
+
+            // Clear previous content
+            contentDiv.innerHTML = '';
+
+            // Extract repository owner and name from the URL
+            const urlParts = githubUrl.replace('https://github.com/', '').split('/');
+            const owner = urlParts[0];
+            const repo = urlParts[1];
+
+            // Fetch the content from the GitHub API
+            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Not Found') {
+                        contentDiv.innerHTML = '<p>Repository not found.</p>';
+                    } else {
+                        data.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.innerHTML = `<strong>${item.name}</strong>: ${item.type === 'file' ? 'File' : 'Directory'}`;
+                            contentDiv.appendChild(itemDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    contentDiv.innerHTML = '<p>Error fetching data. Please check the URL and try again.</p>';
+                });
+        });
+    </script>
+</body>
+</html>
