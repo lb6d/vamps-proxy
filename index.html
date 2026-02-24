@@ -3,109 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Proxy</title>
+    <title>Proxy Frame</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            position: relative;
         }
-
-        .container {
-            background: white;
+        #proxyForm {
+            margin-bottom: 20px;
             padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+        #proxyFrame {
             width: 100%;
-            max-width: 600px;
-            text-align: center;
-        }
-
-        form {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
+            height: 500px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            background: white;
+            position: relative;
+            z-index: 1;
         }
-
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .error {
+            color: red;
+            margin-top: 10px;
         }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #content {
-            min-height: 200px;
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>GitHub Proxy</h1>
-        <form id="proxyForm">
-            <label for="githubUrl">Enter GitHub Repository URL:</label>
-            <input type="text" id="githubUrl" name="githubUrl" required>
-            <button type="submit">Proxy</button>
-        </form>
-        <div id="content"></div>
-    </div>
+    <form id="proxyForm">
+        <label for="url">Enter URL:</label>
+        <input type="text" id="url" required>
+        <button type="submit">Go</button>
+    </form>
+    <div id="errorMessage" class="error"></div>
+    <iframe id="proxyFrame"></iframe>
+
     <script>
         document.getElementById('proxyForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const githubUrl = document.getElementById('githubUrl').value;
-            const contentDiv = document.getElementById('content');
 
-            // Clear previous content
-            contentDiv.innerHTML = '';
+            const url = document.getElementById('url').value;
+            const errorMessage = document.getElementById('errorMessage');
 
-            // Extract repository owner and name from the URL
-            const urlParts = githubUrl.replace('https://github.com/', '').split('/');
-            const owner = urlParts[0];
-            const repo = urlParts[1];
+            // Clear previous error messages
+            errorMessage.textContent = '';
 
-            // Fetch the content from the GitHub API
-            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message === 'Not Found') {
-                        contentDiv.innerHTML = '<p>Repository not found.</p>';
-                    } else {
-                        data.forEach(item => {
-                            const itemDiv = document.createElement('div');
-                            itemDiv.innerHTML = `<strong>${item.name}</strong>: ${item.type === 'file' ? 'File' : 'Directory'}`;
-                            contentDiv.appendChild(itemDiv);
-                        });
-                    }
-                })
-                .catch(error => {
-                    contentDiv.innerHTML = '<p>Error fetching data. Please check the URL and try again.</p>';
-                });
+            if (!url) {
+                errorMessage.textContent = 'Please enter a URL.';
+                return;
+            }
+
+            // Basic URL validation
+            try {
+                new URL(url);
+            } catch (_) {
+                errorMessage.textContent = 'Invalid URL format.';
+                return;
+            }
+
+            const proxyFrame = document.getElementById('proxyFrame');
+            proxyFrame.src = url;
         });
+
+        // Create stars
+        function createStars(count) {
+            const stars = [];
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = `${Math.random() * 2 + 1}px`;
+                star.style.height = `${Math.random() * 2 + 1}px`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.animation = `moveStar ${Math.random() * 5 + 5}s linear infinite`;
+                document.body.appendChild(star);
+                stars.push(star);
+            }
+            return stars;
+        }
+
+        // Move stars away from mouse
+        function moveStarsAwayFromMouse(stars) {
+            document.addEventListener('mousemove', (event) => {
+                stars.forEach(star => {
+                    const rect = star.getBoundingClientRect();
+                    const dx = event.clientX - (rect.left + rect.width / 2);
+                    const dy = event.clientY - (rect.top + rect.height / 2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    star.style.transform = `translate(${distance * 0.1 * Math.cos(angle)}px, ${distance * 0.1 * Math.sin(angle)}px)`;
+                });
+            });
+        }
+
+        // Create and animate stars
+        const stars = createStars(100);
+        moveStarsAwayFromMouse(stars);
     </script>
 </body>
 </html>
